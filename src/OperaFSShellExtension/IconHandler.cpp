@@ -9,11 +9,6 @@
 extern long g_cDllRef;
 extern HINSTANCE g_hInst;
 
-// A CLSID is required for registration of the extension in the registry.
-// This extension's CLSID is: { e0b60a9b-9f69-4ca6-ac9b-edbb502a9fce }
-const CLSID CLSID_OperaFSShellExtension =
-{ 0xdeadbeef, 0xdead, 0xbeef, { 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef } };
-
 IconHandler::IconHandler() : m_cRef(1), m_pStream(NULL)
 {
 	InterlockedIncrement(&g_cDllRef);
@@ -55,6 +50,23 @@ IFACEMETHODIMP_(ULONG) IconHandler::Release()
 }
 
 // IInitializeWithStream Implementation
+
+/// <summary>
+/// Initializes a handler with a stream.
+/// </summary>
+/// <param name="pstream">
+/// A pointer to the stream source.
+/// </param>
+/// <param name="grfMode">
+/// A STGM value that indicates the access mode of the pstream.
+/// </param>
+/// <returns>
+/// The HRESULT value of setting the registry key.
+/// On success, the value will be S_OK. On fail, the value will be an error code.
+/// </returns>
+/// <remarks>
+/// Only one stream should be initialized per instance of IconHandler.
+/// </remarks>
 IFACEMETHODIMP IconHandler::Initialize(IStream *pstream, DWORD grfMode)
 {
 	HRESULT hr = HRESULT_FROM_WIN32(ERROR_ALREADY_INITIALIZED);
@@ -73,6 +85,32 @@ IFACEMETHODIMP IconHandler::Extract(PCWSTR pszFile, UINT nIconIndex, HICON *phic
 	return S_FALSE;
 }
 
+/// <summary>
+/// Gets the location and index of an icon.
+/// </summary>
+/// <param name="uFlags">
+/// Flag information to determine how to get the icon. Can be NULL.
+/// </param>
+/// <param name="pszIconFile">
+/// A pointer to the buffer that gets the icon location.
+/// The location is a null-terminated string that identifies the file that contains the icon.
+/// </param>
+/// <param name="cchMax">
+/// The size of the buffer, in characters, pointed to by pszIconFile.
+/// </param>
+/// <param name="piIndex">
+/// A pointer to an int that recieves the index of the icon in the fild pointed to by pszIconFile.
+/// </param>
+/// <param name="pwFlags">
+/// A UINT value that gets a zero of a combination of flag values.
+/// </param>
+/// <returns>
+/// The HRESULT value of setting the registry key.
+/// On success, the value will be S_OK. On fail, the value will be an error code.
+/// </returns>
+/// <remarks>
+/// For flag information, see https://docs.microsoft.com/en-us/windows/win32/api/shlobj_core/nf-shlobj_core-iextracticona-geticonlocation
+/// </remarks>
 IFACEMETHODIMP IconHandler::GetIconLocation(UINT uFlags, PWSTR pszIconFile, UINT cchMax, int *piIndex, UINT *pwFlags)
 {
 	char duck[] = { 'd', 'u', 'c', 'k' };

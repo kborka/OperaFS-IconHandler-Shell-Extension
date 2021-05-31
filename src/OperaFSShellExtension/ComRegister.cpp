@@ -3,6 +3,22 @@
 #include <combaseapi.h>
 #include <strsafe.h>
 
+/// <Summary>
+/// Create a registry key under HKEY_CLASSES_ROOT and set a specific value.
+/// </Summary>
+/// <param name="pszSubKey">
+/// The specific registry key to be affected. If the registry key doesn't exist, it will be created.
+/// </param>
+/// <param name="pszValueName">
+/// The registry value to be set. A NULL value will set the default registry value.
+/// </param>
+/// <param name="pszData">
+/// The data of the registry value.
+/// </param>
+/// <returns>
+/// The HRESULT value of setting the registry key.
+/// On success, the value will be S_OK. On fail, the value will be an error code.
+/// </returns>
 HRESULT SetHKCRRegistryKeyAndValue(PCWSTR pszSubKey, PCWSTR pszValueName,
 	PCWSTR pszData)
 {
@@ -30,6 +46,25 @@ HRESULT SetHKCRRegistryKeyAndValue(PCWSTR pszSubKey, PCWSTR pszValueName,
 	return hr;
 }
 
+/// <Summary>
+/// Gets the data from a specified registry key and registry value name under HKEY_CLASSES_ROOT.
+/// </Summary>
+/// <param name="pszSubKey">
+/// The specific registry key to be accessed. If the registry key doesn't exist, the function returns an error.
+/// </param>
+/// <param name="pszValueName">
+/// The registry value to be retrieved. A NULL value will set the default registry value.
+/// </param>
+/// <param name="pszData">
+/// A pointer to the buffer that will get the registry value's data.
+/// </param>
+/// <param name="cbData">
+/// The size of the buffer in bytes.
+/// </param>
+/// <returns>
+/// The HRESULT value of setting the registry key.
+/// On success, the value will be S_OK. On fail, the value will be an error code.
+/// </returns>
 HRESULT GetHKCRRegistryKeyAndValue(PCWSTR pszSubKey, PCWSTR pszValueName,
 	PWSTR pszData, DWORD cbData)
 {
@@ -52,6 +87,28 @@ HRESULT GetHKCRRegistryKeyAndValue(PCWSTR pszSubKey, PCWSTR pszValueName,
 	return hr;
 }
 
+/// <Summary>
+/// Register the in-process component in the registry.
+/// </Summary>
+/// <param name="pszModule">
+/// Path of the module that contains the component.
+/// </param>
+/// <param name="clsid">
+/// The Class ID of the component.
+/// </param>
+/// <param name="pszFriendlyName">
+/// The friendly name of the component. Preferably a description instead of a key.
+/// </param>
+/// <param name="pszThreadModel">
+/// The threading model of the component. In most cases it should be "Apartment".
+/// </param>
+/// <returns>
+/// The HRESULT value of setting the registry key.
+/// On success, the value will be S_OK. On fail, the value will be an error code.
+/// </returns>
+/// <remarks>
+/// This function creates the HKEY_CLASSES_ROOT\CLSID\{CLSID} key in the registry, as well as its InprocServer32 subkey.
+/// </remarks>
 HRESULT RegisterInprocServer(PCWSTR pszModule, const CLSID& clsid, PCWSTR pszFriendlyName, PCWSTR pszThreadModel)
 {
 	if (pszModule == NULL || pszThreadModel == NULL)
@@ -92,6 +149,19 @@ HRESULT RegisterInprocServer(PCWSTR pszModule, const CLSID& clsid, PCWSTR pszFri
 	return hr;
 }
 
+/// <Summary>
+/// Unegister the in-process component in the registry.
+/// </Summary>
+/// <param name="clsid">
+/// The Class ID of the component.
+/// </param>
+/// <returns>
+/// The HRESULT value of setting the registry key.
+/// On success, the value will be S_OK. On fail, the value will be an error code.
+/// </returns>
+/// <remarks>
+/// This function deletes the HKEY_CLASSES_ROOT\CLSID\{CLSID} key in the registry.
+/// </remarks>
 HRESULT UnregisterInprocServer(const CLSID& clsid)
 {
 	HRESULT hr = S_OK;
@@ -111,6 +181,35 @@ HRESULT UnregisterInprocServer(const CLSID& clsid)
 	return hr;
 }
 
+/// <Summary>
+/// Register the IconHandler in the registry.
+/// </Summary>
+/// <param name="pszFileType">
+/// The file type that this IconHandler will check against.
+/// </param>
+/// <param name="clsid">
+/// The Class ID of the component.
+/// </param>
+/// <param name="pszFriendlyName">
+/// The friendly name of the component. Should be an intermediate registry key, such as {ProgramName}.{FileType}.
+/// </param>
+/// <returns>
+/// The HRESULT value of setting the registry key.
+/// On success, the value will be S_OK. On fail, the value will be an error code.
+/// </returns>
+/// <remarks>
+/// This function creates the following registry key structure:
+/// HKEY_CLASSES_ROOT
+///   {pszFileType}
+///       (Default) = {pszFriendlyName}
+///   {pszFriendlyName}
+///       (Default) = Description
+///        DefaultIcon
+///            (Default) = %1
+///        Shellex
+///            IconHandler
+///                (Default) = {clsid}
+/// </remarks>
 HRESULT RetisterShellExtIconHandler(PCWSTR pszFileType, const CLSID& clsid, PCWSTR pszFriendlyName)
 {
 	if (pszFileType == NULL)
@@ -127,7 +226,7 @@ HRESULT RetisterShellExtIconHandler(PCWSTR pszFileType, const CLSID& clsid, PCWS
 
 	
 	// Always assume no keys exist for file type already.
-	// Create the registry key for the file type and set the defautl value to the friendly name.
+	// Create the registry key for the file type and set the default value to the friendly name.
 	hr = StringCchPrintf(szSubkey, ARRAYSIZE(szSubkey), L"%s", pszFileType);
 	if (SUCCEEDED(hr))
 	{
@@ -170,6 +269,19 @@ HRESULT RetisterShellExtIconHandler(PCWSTR pszFileType, const CLSID& clsid, PCWS
 
 }
 
+/// <Summary>
+/// Unregister the IconHandler from the registry.
+/// </Summary>
+/// <param name="pszFileType">
+/// The file type this icon handler is associated with.
+/// </param>
+/// <param name="pszFriendlyName">
+/// The friendly name of the component. Should be an intermediate registry key such as {ProgramName}.{FileType}.
+/// </param>
+/// <returns>
+/// The HRESULT value of setting the registry key.
+/// On success, the value will be S_OK. On fail, the value will be an error code.
+/// </returns>
 HRESULT UnregisterShellExtIconHandler(PCWSTR pszFileType, PCWSTR pszFriendlyName)
 {
 	if (pszFileType == NULL)
