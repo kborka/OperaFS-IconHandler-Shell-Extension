@@ -20,10 +20,10 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 {
     switch (ul_reason_for_call)
     {
-	case DLL_PROCESS_ATTACH:
-		g_hInst = hModule;
-		DisableThreadLibraryCalls(hModule);
-		break;
+    case DLL_PROCESS_ATTACH:
+        g_hInst = hModule;
+        DisableThreadLibraryCalls(hModule);
+        break;
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
     case DLL_PROCESS_DETACH:
@@ -47,21 +47,21 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 /// </param>
 STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 {
-	HRESULT hr = CLASS_E_CLASSNOTAVAILABLE;
+    HRESULT hr = CLASS_E_CLASSNOTAVAILABLE;
 
-	if (IsEqualCLSID(CLSID_OperaFSShellExtension, rclsid))
-	{
-		hr = E_OUTOFMEMORY;
-		
-		ClassFactory *pClassFactory = new ClassFactory();
-		if (pClassFactory)
-		{
-			hr = pClassFactory->QueryInterface(riid, ppv);
-			pClassFactory->Release();
-		}
-	}
+    if (IsEqualCLSID(CLSID_OperaFSShellExtension, rclsid))
+    {
+        hr = E_OUTOFMEMORY;
+        
+        ClassFactory *pClassFactory = new ClassFactory();
+        if (pClassFactory)
+        {
+            hr = pClassFactory->QueryInterface(riid, ppv);
+            pClassFactory->Release();
+        }
+    }
 
-	return hr;
+    return hr;
 }
 
 /// <Summary>
@@ -69,7 +69,7 @@ STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 /// </Summary>
 STDAPI DllCanUnloadNow(void)
 {
-	return g_cDllRef > 0 ? S_FALSE : S_OK;
+    return g_cDllRef > 0 ? S_FALSE : S_OK;
 }
 
 /// <Summary>
@@ -77,24 +77,24 @@ STDAPI DllCanUnloadNow(void)
 /// </Summary>
 STDAPI DllRegisterServer(void)
 {
-	HRESULT hr;
+    HRESULT hr;
 
-	wchar_t szModule[MAX_PATH];
-	if (GetModuleFileName(g_hInst, szModule, ARRAYSIZE(szModule)) == 0)
-	{
-		hr = HRESULT_FROM_WIN32(GetLastError());
-		return hr;
-	}
+    wchar_t szModule[MAX_PATH];
+    if (GetModuleFileName(g_hInst, szModule, ARRAYSIZE(szModule)) == 0)
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        return hr;
+    }
 
-	// Register the component, creating the CLSID in the registry.
-	hr = RegisterInprocServer(szModule, CLSID_OperaFSShellExtension, L"OperaFS Tools", L"Apartment");
-	if (SUCCEEDED(hr))
-	{
-		// Register the IconHandler, creating the file extension, friendly name, and IconHandler registry keys.
-		hr = RetisterShellExtIconHandler(L".operafs", CLSID_OperaFSShellExtension, L"3DO.OperaFS");		
-	}
+    // Register the component, creating the CLSID in the registry.
+    hr = RegisterInprocServer(szModule, CLSID_OperaFSShellExtension, L"OperaFS Tools", L"Apartment");
+    if (SUCCEEDED(hr))
+    {
+        // Register the IconHandler, creating the file extension, friendly name, and IconHandler registry keys.
+        hr = RetisterShellExtIconHandler(L".operafs", CLSID_OperaFSShellExtension, L"3DO.OperaFS");		
+    }
 
-	return hr;
+    return hr;
 }
 
 /// <Summary>
@@ -102,22 +102,22 @@ STDAPI DllRegisterServer(void)
 /// </Summary>
 STDAPI DllUnregisterServer(void)
 {
-	HRESULT hr = S_OK;
+    HRESULT hr = S_OK;
 
-	wchar_t szModule[MAX_PATH];
-	if (GetModuleFileName(g_hInst, szModule, ARRAYSIZE(szModule)) == 0)
-	{
-		hr = HRESULT_FROM_WIN32(GetLastError());
-		return hr;
-	}
+    wchar_t szModule[MAX_PATH];
+    if (GetModuleFileName(g_hInst, szModule, ARRAYSIZE(szModule)) == 0)
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        return hr;
+    }
 
-	// Delete the CLSID key tree.
-	hr = UnregisterInprocServer(CLSID_OperaFSShellExtension);
-	if (SUCCEEDED(hr))
-	{
-		// Delete the file extension and friendly name trees.
-		hr = UnregisterShellExtIconHandler(L".operafs", L"3DO.OperaFS");
-	}
+    // Delete the CLSID key tree.
+    hr = UnregisterInprocServer(CLSID_OperaFSShellExtension);
+    if (SUCCEEDED(hr))
+    {
+        // Delete the file extension and friendly name trees.
+        hr = UnregisterShellExtIconHandler(L".operafs", L"3DO.OperaFS");
+    }
 
-	return hr;
+    return hr;
 }

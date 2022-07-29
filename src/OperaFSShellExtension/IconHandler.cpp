@@ -11,42 +11,42 @@ extern HINSTANCE g_hInst;
 
 IconHandler::IconHandler() : m_cRef(1), m_pStream(NULL)
 {
-	InterlockedIncrement(&g_cDllRef);
+    InterlockedIncrement(&g_cDllRef);
 }
 
 IconHandler::~IconHandler()
 {
-	InterlockedDecrement(&g_cDllRef);
+    InterlockedDecrement(&g_cDllRef);
 }
 
 // IUnknown Implementation
 IFACEMETHODIMP IconHandler::QueryInterface(REFIID riid, void **ppv)
 {
-	static const QITAB qit[] =
-	{
-		QITABENT(IconHandler, IInitializeWithStream),
-		QITABENT(IconHandler, IExtractIconW),
-		{ 0 },
-	};
+    static const QITAB qit[] =
+    {
+        QITABENT(IconHandler, IInitializeWithStream),
+        QITABENT(IconHandler, IExtractIconW),
+        { 0 },
+    };
 
-	return QISearch(this, qit, riid, ppv);
+    return QISearch(this, qit, riid, ppv);
 }
 
 IFACEMETHODIMP_(ULONG) IconHandler::AddRef()
 {
-	return InterlockedIncrement(&m_cRef);
+    return InterlockedIncrement(&m_cRef);
 }
 
 IFACEMETHODIMP_(ULONG) IconHandler::Release()
 {
-	ULONG cRef = InterlockedDecrement(&m_cRef);
+    ULONG cRef = InterlockedDecrement(&m_cRef);
 
-	if (0 == cRef)
-	{
-		delete this;
-	}
+    if (0 == cRef)
+    {
+        delete this;
+    }
 
-	return cRef;
+    return cRef;
 }
 
 // IInitializeWithStream Implementation
@@ -69,20 +69,20 @@ IFACEMETHODIMP_(ULONG) IconHandler::Release()
 /// </remarks>
 IFACEMETHODIMP IconHandler::Initialize(IStream *pstream, DWORD grfMode)
 {
-	HRESULT hr = HRESULT_FROM_WIN32(ERROR_ALREADY_INITIALIZED);
+    HRESULT hr = HRESULT_FROM_WIN32(ERROR_ALREADY_INITIALIZED);
 
-	if (m_pStream == NULL)
-	{
-		hr = pstream->QueryInterface(&m_pStream);
-	}
+    if (m_pStream == NULL)
+    {
+        hr = pstream->QueryInterface(&m_pStream);
+    }
 
-	return hr;
+    return hr;
 }
 
 // IExtractIcon Implementation
 IFACEMETHODIMP IconHandler::Extract(PCWSTR pszFile, UINT nIconIndex, HICON *phiconLarge, HICON *phiconSmall, UINT nIconSize)
 {
-	return S_FALSE;
+    return S_FALSE;
 }
 
 /// <summary>
@@ -113,24 +113,30 @@ IFACEMETHODIMP IconHandler::Extract(PCWSTR pszFile, UINT nIconIndex, HICON *phic
 /// </remarks>
 IFACEMETHODIMP IconHandler::GetIconLocation(UINT uFlags, PWSTR pszIconFile, UINT cchMax, int *piIndex, UINT *pwFlags)
 {
-	char duck[] = { 'd', 'u', 'c', 'k' };
-	char duckBytes[4];
+    if ((uFlags & GIL_ASYNC) == GIL_ASYNC)
+    {
+        return E_PENDING;
+    }
 
-	m_pStream->Seek({ 132 }, STREAM_SEEK_SET, NULL);
-	m_pStream->Read(duckBytes, ARRAYSIZE(duckBytes), NULL);
+    char duck[] = { 'd', 'u', 'c', 'k' };
+    char duckBytes[4];
 
-	for (int i = 0; i < ARRAYSIZE(duck); i++)
-	{
-		if (duckBytes[i] != duck[i])
-		{
-			return S_FALSE;
-		}
-	}
-	
-	GetModuleFileName(g_hInst, pszIconFile, cchMax);		
+    HRESULT seekHr = m_pStream->Seek({ 132 }, STREAM_SEEK_SET, NULL);
+    HRESULT readHr = m_pStream->Read(duckBytes, ARRAYSIZE(duckBytes), NULL);
+    HRESULT releaseHr = m_pStream->Release();
 
-	*piIndex = 0;
-	*pwFlags = 0;
+    for (int i = 0; i < ARRAYSIZE(duck); i++)
+    {
+        if (duckBytes[i] != duck[i])
+        {
+            return S_FALSE;
+        }
+    }
+    
+    GetModuleFileName(g_hInst, pszIconFile, cchMax);
 
-	return S_OK;
+    *piIndex = 0;
+    *pwFlags = 0;
+
+    return S_OK;
 }
